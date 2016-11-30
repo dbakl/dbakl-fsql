@@ -10,19 +10,7 @@
     namespace DbAkl\FSql;
 
 
-    use gis\core\exception\GisException;
-    use gis\core\exception\NoDataException;
-    use gis\db\core\Connection;
-    use gis\db\driver\mysql\MySqlResult;
-    use gis\db\exception\DbError;
-    use gis\db\opt\edbc\core\EdbcEntity;
-    use gis\db\opt\orm\core\Kernel;
-    use gis\db\opt\orm\core\OrmResolver;
-    use gis\db\opt\orm\exception\InvalidPropertyNameException;
-    use gis\db\opt\orm\LateLoadingResult;
-    use gis\db\opt\orm\PersistenceManager;
-    use gis\db\RawSql;
-    use gis\db\Sql;
+
 
     class FSql {
 
@@ -34,14 +22,12 @@
         private $mType;
 
         /**
-         * @var Connection
+         * @var FSqlResolverInterface
          */
-        private $mCon;
-        private $mPm;
+        private $mResolver;
 
-        public function __construct (Connection $con, PersistenceManager $pm = NULL) {
-            $this->mCon = $con;
-            $this->mPm = $pm;
+        public function __construct (FSqlResolverInterface $resolver) {
+            $this->mResolver = $resolver;
         }
 
 
@@ -55,7 +41,7 @@
          * @return $this
          * @throws InvalidPropertyNameException
          */
-        public function update ($tableOrClassName, $id=NULL) {
+        public function update ($tableOrClassName, mixed $restriction) {
             if ($this->mType === NULL)
                 $this->mType = self::T_UPDATE;
             $this->mTable = $this->getTableName($tableOrClassName);
@@ -71,7 +57,7 @@
          * @return $this
          * @throws InvalidPropertyNameException
          */
-        public function delete ($tableOrClassName, $id=NULL) {
+        public function delete ($tableOrClassName, mixed $restriction) {
             if ($this->mType === NULL)
                 $this->mType = self::T_DELETE;
             $this->mTable = $this->getTableName($tableOrClassName);
@@ -111,7 +97,7 @@
          *
          * @return $this
          */
-        public function from ($tableOrClassName, $id=NULL) {
+        public function from ($tableOrClassName, $as="entity") {
 
             if ($this->mType === NULL)
                 $this->mType = self::T_SELECT;
@@ -149,14 +135,8 @@
 
 
 
-        public function getTableName ($tableOrClassName) {
-            try {
-                $def = Kernel::GetClassDefinition($tableOrClassName);
-                $tableName = $def->tableName;
-            } catch ( NoDataException $e) {
-                $tableName = $tableOrClassName;
-            }
-            return $tableName;
+        public function getTableName ($tableOrClassName) : string {
+            $this->mResolver->resolveTableName($tableOrClassName);
         }
 
 
@@ -168,7 +148,7 @@
          * @param null $on
          * @return $this
          */
-        public function leftJoin ($tableOrClassName, $on=NULL) {
+        public function leftJoin ($tableOrClassName, $as=NULL, $on=NULL) {
             $tableName = $this->getTableName($tableOrClassName);
             $this->mJoins[] = "LEFT JOIN {$tableName} ON $on";
             return $this;
@@ -179,7 +159,7 @@
          * @param null $on
          * @return $this
          */
-        public function innerJoin ($tableOrClassName, $on=NULL) {
+        public function innerJoin ($tableOrClassName, $as=NULL, $on=NULL) {
             $tableName = $this->getTableName($tableOrClassName);
             $this->mJoins[] = "INNER JOIN {$tableName} ON $on";
             return $this;
