@@ -1,0 +1,32 @@
+{
+    "name": "dbakl/dbakl-fsql",
+    "type": "library",
+    "description": "dbakl Fluent Sql Interface",
+    "keywords": ["DbAkl", "framework"],
+    "homepage": "https://getgismo.com",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Matthias Leuffen",
+            "email": "matthes@leuffen.de"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "dbakl/dbakl-core": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "DbAkl\\FSql\\": "/src/FSql/"
+        },
+        "exclude-from-classmap": [
+            "/test/"
+        ]
+    },
+    "minimum-stability": "dev",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1-dev"
+        }
+    }
+}
